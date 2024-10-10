@@ -36,6 +36,7 @@ export_validator_key() {
     display_status "正在导出验证器密钥..." "info"
     /usr/local/bin/story validator export
     display_status "验证器密钥导出成功。" "success"
+    read -n 1 -s -r -p "导出完成！按任意键继续..."
     read -n 1 -s -r -p "导出完成！按任意键返回主菜单..."
     main_menu
 }
@@ -168,6 +169,7 @@ unstake_from_validator() {
 # 主菜单
 main_menu() {
     while true; do
+    clear
         clear
         echo "============================${INFO_COLOR}${BOLD}Story 节点管理工具${NORMAL}${INFO_COLOR}============================"${NORMAL}
         ${INFO_COLOR}echo "请选择操作:"${NORMAL}
