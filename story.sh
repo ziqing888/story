@@ -34,59 +34,47 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
-# 更新并安装必需的软件包
-show_status "正在更新并安装依赖..." "progress"
-apt update && apt upgrade -y && apt install -y curl wget jq make gcc nano
-show_status "依赖安装完成。" "success"
+# Story 节点安装函数
+install_story_node() {
+    show_status "正在安装 Story 节点..." "progress"
 
-# 安装 Node.js 和 npm
-if ! command -v node &> /dev/null; then
-    show_status "正在安装 Node.js..." "progress"
-    curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash -
-    sudo apt-get install -y nodejs
-    show_status "Node.js 安装完成。" "success"
-else
-    show_status "Node.js 已安装，跳过此步骤。" "success"
-fi
+    # 更新并安装必需的软件包
+    apt update && apt upgrade -y && apt install -y curl wget jq make gcc nano
 
-# 安装 PM2
-if ! command -v pm2 &> /dev/null; then
-    show_status "正在安装 PM2..." "progress"
-    npm install pm2@latest -g
-    show_status "PM2 安装完成。" "success"
-else
-    show_status "PM2 已安装，跳过此步骤。" "success"
-fi
+    # 安装 Node.js 和 npm
+    if ! command -v node &> /dev/null; then
+        show_status "正在安装 Node.js..." "progress"
+        curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash -
+        sudo apt-get install -y nodejs
+        show_status "Node.js 安装完成。" "success"
+    else
+        show_status "Node.js 已安装，跳过此步骤。" "success"
+    fi
 
-# 安装 Story 节点
-show_status "正在安装 Story 节点..." "progress"
-wget -q https://story-geth-binaries.s3.us-west-1.amazonaws.com/geth-public/geth-linux-amd64-0.9.3.tar.gz
-wget -q https://story-geth-binaries.s3.us-west-1.amazonaws.com/story-public/story-linux-amd64-0.10.1.tar.gz
+    # 安装 PM2
+    if ! command -v pm2 &> /dev/null; then
+        show_status "正在安装 PM2..." "progress"
+        npm install pm2@latest -g
+        show_status "PM2 安装完成。" "success"
+    else
+        show_status "PM2 已安装，跳过此步骤。" "success"
+    fi
 
-# 解压缩并配置客户端
-tar -xzf geth-linux-amd64-0.9.3.tar.gz -C /usr/local/bin/
-tar -xzf story-linux-amd64-0.10.1.tar.gz -C /usr/local/bin/
-show_status "Story 节点安装完成。" "success"
+    # 下载并安装 Story 节点
+    wget -q https://story-geth-binaries.s3.us-west-1.amazonaws.com/geth-public/geth-linux-amd64-0.9.3.tar.gz
+    wget -q https://story-geth-binaries.s3.us-west-1.amazonaws.com/story-public/story-linux-amd64-0.10.1.tar.gz
 
-# 初始化 Story 节点
-show_status "初始化 Story 节点..." "progress"
-/usr/local/bin/story init --network iliad
-show_status "Story 节点初始化完成。" "success"
+    tar -xzf geth-linux-amd64-0.9.3.tar.gz -C /usr/local/bin/
+    tar -xzf story-linux-amd64-0.10.1.tar.gz -C /usr/local/bin/
 
-# 使用 PM2 启动 Story 客户端（使用 -f 强制启动）
-show_status "使用 PM2 启动 Story 客户端..." "progress"
-pm2 start /usr/local/bin/story --name story-client -- run -f
-show_status "Story 客户端已成功启动。" "success"
+    # 初始化 Story 节点
+    /usr/local/bin/story init --network iliad
+    show_status "Story 节点安装和初始化完成。" "success"
 
-# 创建 .env 文件以存储私钥
-if [ ! -f "$HOME/.story/.env" ]; then
-    read -p "请输入您的私钥（不包括 0x 前缀）: " PRIVATE_KEY
-    mkdir -p "$HOME/.story"
-    echo "PRIVATE_KEY=${PRIVATE_KEY}" > "$HOME/.story/.env"
-    show_status ".env 文件已创建，私钥已保存。" "success"
-else
-    show_status "已检测到现有的 .env 文件，跳过私钥输入。" "success"
-fi
+    # 使用 PM2 启动 Story 客户端
+    pm2 start /usr/local/bin/story --name story-client -- run -f
+    show_status "Story 客户端已成功启动。" "success"
+}
 
 # 设置验证器的函数
 function setup_validator() {
@@ -113,66 +101,22 @@ function setup_validator() {
     esac
 }
 
-# 创建新的验证器
-function create_validator() {
-    read -p "请输入质押金额（以 IP 为单位）: " AMOUNT_TO_STAKE_IN_IP
-    AMOUNT_TO_STAKE_IN_WEI=$((AMOUNT_TO_STAKE_IN_IP * 1000000000000000000))
-    /usr/local/bin/story validator create --stake ${AMOUNT_TO_STAKE_IN_WEI}
-    show_status "新的验证器创建成功。" "success"
-}
-
-# 质押到现有验证器
-function stake_to_validator() {
-    read -p "请输入验证器公钥（Base64格式）: " VALIDATOR_PUB_KEY_IN_BASE64
-    read -p "请输入质押金额（以 IP 为单位）: " AMOUNT_TO_STAKE_IN_IP
-    AMOUNT_TO_STAKE_IN_WEI=$((AMOUNT_TO_STAKE_IN_IP * 1000000000000000000))
-    /usr/local/bin/story validator stake --validator-pubkey ${VALIDATOR_PUB_KEY_IN_BASE64} --stake ${AMOUNT_TO_STAKE_IN_WEI}
-    show_status "质押成功。" "success"
-}
-
-# 取消质押
-function unstake_from_validator() {
-    read -p "请输入验证器公钥（Base64格式）: " VALIDATOR_PUB_KEY_IN_BASE64
-    read -p "请输入取消质押金额（以 IP 为单位）: " AMOUNT_TO_UNSTAKE_IN_IP
-    AMOUNT_TO_UNSTAKE_IN_WEI=$((AMOUNT_TO_UNSTAKE_IN_IP * 1000000000000000000))
-    /usr/local/bin/story validator unstake --validator-pubkey ${VALIDATOR_PUB_KEY_IN_BASE64} --unstake ${AMOUNT_TO_UNSTAKE_IN_WEI}
-    show_status "取消质押成功。" "success"
-}
-
-# 导出验证器密钥
-function export_validator_key() {
-    /usr/local/bin/story validator export
-    show_status "验证器密钥导出成功。" "success"
-}
-
-# 添加操作员
-function add_operator() {
-    read -p "请输入操作员的EVM地址: " OPERATOR_EVM_ADDRESS
-    /usr/local/bin/story validator add-operator --operator ${OPERATOR_EVM_ADDRESS}
-    show_status "操作员添加成功。" "success"
-}
-
-# 移除操作员
-function remove_operator() {
-    read -p "请输入操作员的EVM地址: " OPERATOR_EVM_ADDRESS
-    /usr/local/bin/story validator remove-operator --operator ${OPERATOR_EVM_ADDRESS}
-    show_status "操作员移除成功。" "success"
-}
-
 # 主菜单
 function main_menu() {
     clear
     echo "============================Story 节点管理工具============================"
     echo "请选择操作:"
-    echo "1. 设置验证器"
-    echo "2. 检查节点状态"
-    echo "3. 退出"
-    read -p "请输入选项（1-3）: " OPTION
+    echo "1. 安装 Story 节点"
+    echo "2. 设置验证器"
+    echo "3. 检查节点状态"
+    echo "4. 退出"
+    read -p "请输入选项（1-4）: " OPTION
 
     case $OPTION in
-        1) setup_validator ;;
-        2) pm2 logs story-client ;;
-        3) exit 0 ;;
+        1) install_story_node ;;
+        2) setup_validator ;;
+        3) pm2 logs story-client ;;
+        4) exit 0 ;;
         *) show_status "无效选项，请重试。" "error"; main_menu ;;
     esac
 }
