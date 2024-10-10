@@ -1,4 +1,3 @@
-
 #!/bin/bash
 
 # 定义文本格式
@@ -58,8 +57,8 @@ setup_prerequisites() {
 install_runtime_env() {
     if ! command -v node &> /dev/null; then
         display_status "正在安装 Node.js..." "info"
-        curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash -
-        sudo apt-get install -y nodejs
+        curl -fsSL https://deb.nodesource.com/setup_16.x | bash -
+        apt-get install -y nodejs
         display_status "Node.js 安装完成。" "success"
     else
         display_status "Node.js 已安装，跳过此步骤。" "success"
@@ -139,26 +138,34 @@ create_validator() {
     display_status "新的验证器创建成功。" "success"
 }
 
+# 导出验证器密钥
+export_validator_key() {
+    display_status "正在导出验证器密钥..." "info"
+    /usr/local/bin/story validator export
+    display_status "验证器密钥导出成功。" "success"
+}
+
 # 主菜单
 main_menu() {
-    clear
-    echo "============================Story 节点管理工具============================"
-    echo "请选择操作:"
-    echo "1. 部署 Story 节点"
-    echo "2. 管理验证器"
-    echo "3. 查看节点状态"
-    echo "4. 退出"
-    read -p "请输入选项（1-4）: " OPTION
+    while true; do
+        clear
+        echo "============================Story 节点管理工具============================"
+        echo "请选择操作:"
+        echo "1. 部署 Story 节点"
+        echo "2. 管理验证器"
+        echo "3. 查看节点状态"
+        echo "4. 退出"
+        read -p "请输入选项（1-4）: " OPTION
 
-    case $OPTION in
-        1) deploy_story_node ;;
-        2) manage_validator ;;
-        3) pm2 logs story-client ;;
-        4) exit 0 ;;
-        *) display_status "无效选项，请重试。" "error"; main_menu ;;
-    esac
+        case $OPTION in
+            1) deploy_story_node ;;
+            2) manage_validator ;;
+            3) pm2 logs story-client ;;
+            4) exit 0 ;;
+            *) display_status "无效选项，请重试。" "error" ;;
+        esac
+    done
 }
 
 # 启动主菜单
 main_menu
-
