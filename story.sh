@@ -164,19 +164,18 @@ function main_menu() {
     clear
     echo "============================Story 节点管理工具============================"
     echo "请选择操作:"
-    echo "1. 安装 Story 节点"
-    echo "2. 设置验证器"
-    echo "3. 检查节点状态"
-    echo "4. 退出"
-    read -p "请输入选项（1-4）: " OPTION
+    echo "1. 设置验证器"
+    echo "2. 检查节点状态"
+    echo "3. 退出"
+    read -p "请输入选项（1-3）: " OPTION
 
     case $OPTION in
-        1) install_story_node ;;
-        2) setup_validator ;;
-        3) pm2 logs story-client ;;
-        4) exit 0 ;;
+        1) setup_validator ;;
+        2) pm2 logs story-client ;;
+        3) exit 0 ;;
         *) show_status "无效选项，请重试。" "error"; main_menu ;;
     esac
 }
 
+# 启动主菜单
 main_menu
