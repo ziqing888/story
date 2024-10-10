@@ -74,6 +74,10 @@ install_story_node() {
     # 使用 PM2 启动 Story 客户端
     pm2 start /usr/local/bin/story --name story-client -- run -f
     show_status "Story 客户端已成功启动。" "success"
+
+    # 等待用户按任意键返回主菜单
+    read -n 1 -s -r -p "安装完成！按任意键返回主菜单..."
+    main_menu
 }
 
 # 设置验证器的函数
@@ -99,6 +103,52 @@ function setup_validator() {
         7) main_menu ;;
         *) show_status "无效选项，请重试。" "error"; setup_validator ;;
     esac
+}
+
+# 创建新的验证器
+function create_validator() {
+    read -p "请输入质押金额（以 IP 为单位）: " AMOUNT_TO_STAKE_IN_IP
+    AMOUNT_TO_STAKE_IN_WEI=$((AMOUNT_TO_STAKE_IN_IP * 1000000000000000000))
+    /usr/local/bin/story validator create --stake ${AMOUNT_TO_STAKE_IN_WEI}
+    show_status "新的验证器创建成功。" "success"
+}
+
+# 质押到现有验证器
+function stake_to_validator() {
+    read -p "请输入验证器公钥（Base64格式）: " VALIDATOR_PUB_KEY_IN_BASE64
+    read -p "请输入质押金额（以 IP 为单位）: " AMOUNT_TO_STAKE_IN_IP
+    AMOUNT_TO_STAKE_IN_WEI=$((AMOUNT_TO_STAKE_IN_IP * 1000000000000000000))
+    /usr/local/bin/story validator stake --validator-pubkey ${VALIDATOR_PUB_KEY_IN_BASE64} --stake ${AMOUNT_TO_STAKE_IN_WEI}
+    show_status "质押成功。" "success"
+}
+
+# 取消质押
+function unstake_from_validator() {
+    read -p "请输入验证器公钥（Base64格式）: " VALIDATOR_PUB_KEY_IN_BASE64
+    read -p "请输入取消质押金额（以 IP 为单位）: " AMOUNT_TO_UNSTAKE_IN_IP
+    AMOUNT_TO_UNSTAKE_IN_WEI=$((AMOUNT_TO_UNSTAKE_IN_IP * 1000000000000000000))
+    /usr/local/bin/story validator unstake --validator-pubkey ${VALIDATOR_PUB_KEY_IN_BASE64} --unstake ${AMOUNT_TO_UNSTAKE_IN_WEI}
+    show_status "取消质押成功。" "success"
+}
+
+# 导出验证器密钥
+function export_validator_key() {
+    /usr/local/bin/story validator export
+    show_status "验证器密钥导出成功。" "success"
+}
+
+# 添加操作员
+function add_operator() {
+    read -p "请输入操作员的EVM地址: " OPERATOR_EVM_ADDRESS
+    /usr/local/bin/story validator add-operator --operator ${OPERATOR_EVM_ADDRESS}
+    show_status "操作员添加成功。" "success"
+}
+
+# 移除操作员
+function remove_operator() {
+    read -p "请输入操作员的EVM地址: " OPERATOR_EVM_ADDRESS
+    /usr/local/bin/story validator remove-operator --operator ${OPERATOR_EVM_ADDRESS}
+    show_status "操作员移除成功。" "success"
 }
 
 # 主菜单
