@@ -36,6 +36,8 @@ export_validator_key() {
     display_status "正在导出验证器密钥..." "info"
     /usr/local/bin/story validator export
     display_status "验证器密钥导出成功。" "success"
+    read -n 1 -s -r -p "导出完成！按任意键返回主菜单..."
+    main_menu
 }
 
 # 确保脚本以 root 用户身份运行
@@ -167,12 +169,12 @@ unstake_from_validator() {
 main_menu() {
     while true; do
         clear
-        echo "============================Story 节点管理工具============================"
-        echo "请选择操作:"
-        echo "1. 部署 Story 节点"
-        echo "2. 管理验证器"
-        echo "3. 查看节点状态"
-        echo "4. 退出"
+        echo "============================${INFO_COLOR}${BOLD}Story 节点管理工具${NORMAL}${INFO_COLOR}============================"${NORMAL}
+        ${INFO_COLOR}echo "请选择操作:"${NORMAL}
+        ${INFO_COLOR}echo "1. 部署 Story 节点"${NORMAL}
+        ${INFO_COLOR}echo "2. 管理验证器"${NORMAL}
+        ${INFO_COLOR}echo "3. 查看节点状态"${NORMAL}
+        ${INFO_COLOR}echo "4. 退出"${NORMAL}
         read -p "请输入选项（1-4）: " OPTION
 
         case $OPTION in
