@@ -6,7 +6,7 @@ NORMAL=$(tput sgr0)
 SUCCESS_COLOR='\033[1;32m'
 WARNING_COLOR='\033[1;33m'
 ERROR_COLOR='\033[1;31m'
-INFO_COLOR='\033[1;36m'
+INFO_COLOR='\e[1;36m'
 
 # 自定义状态显示函数
 display_status() {
