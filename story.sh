@@ -34,14 +34,23 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
-# Story 节点安装函数
-install_story_node() {
-    show_status "正在安装 Story 节点..." "progress"
+# 检查并安装所需的软件包
+install_dependencies() {
+    show_status "检查并安装所需的软件包..." "progress"
 
-    # 更新并安装必需的软件包
-    apt update && apt upgrade -y && apt install -y curl wget jq make gcc nano
+    apt update
+    for package in curl wget jq make gcc nano; do
+        if ! dpkg -l | grep -q "^ii\s\+$package"; then
+            show_status "正在安装 $package..." "progress"
+            apt install -y $package
+        else
+            show_status "$package 已经安装，跳过此步骤。" "success"
+        fi
+    done
+}
 
-    # 安装 Node.js 和 npm
+# 安装 Node.js 和 npm
+install_nodejs_npm() {
     if ! command -v node &> /dev/null; then
         show_status "正在安装 Node.js..." "progress"
         curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash -
@@ -50,8 +59,10 @@ install_story_node() {
     else
         show_status "Node.js 已安装，跳过此步骤。" "success"
     fi
+}
 
-    # 安装 PM2
+# 安装 PM2
+install_pm2() {
     if ! command -v pm2 &> /dev/null; then
         show_status "正在安装 PM2..." "progress"
         npm install pm2@latest -g
@@ -59,6 +70,15 @@ install_story_node() {
     else
         show_status "PM2 已安装，跳过此步骤。" "success"
     fi
+}
+
+# Story 节点安装函数
+install_story_node() {
+    show_status "正在安装 Story 节点..." "progress"
+
+    install_dependencies
+    install_nodejs_npm
+    install_pm2
 
     # 下载并安装 Story 节点
     wget -q https://story-geth-binaries.s3.us-west-1.amazonaws.com/geth-public/geth-linux-amd64-0.9.3.tar.gz
