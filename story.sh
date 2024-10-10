@@ -31,6 +31,13 @@ display_status() {
     esac
 }
 
+# 导出验证器密钥
+export_validator_key() {
+    display_status "正在导出验证器密钥..." "info"
+    /usr/local/bin/story validator export
+    display_status "验证器密钥导出成功。" "success"
+}
+
 # 确保脚本以 root 用户身份运行
 if [[ $EUID -ne 0 ]]; then
     display_status "请以 root 用户权限运行此脚本。" "error"
@@ -136,13 +143,6 @@ create_validator() {
     AMOUNT_TO_STAKE_IN_WEI=$((AMOUNT_TO_STAKE_IN_IP * 1000000000000000000))
     /usr/local/bin/story validator create --stake ${AMOUNT_TO_STAKE_IN_WEI}
     display_status "新的验证器创建成功。" "success"
-}
-
-# 导出验证器密钥
-export_validator_key() {
-    display_status "正在导出验证器密钥..." "info"
-    /usr/local/bin/story validator export
-    display_status "验证器密钥导出成功。" "success"
 }
 
 # 主菜单
