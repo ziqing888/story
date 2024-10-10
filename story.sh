@@ -7,6 +7,7 @@ SUCCESS_COLOR='\033[1;32m'
 WARNING_COLOR='\033[1;33m'
 ERROR_COLOR='\033[1;31m'
 INFO_COLOR='\033[1;36m'
+MENU_COLOR='\033[1;34m'
 
 # 自定义状态显示函数
 display_status() {
@@ -112,14 +113,14 @@ deploy_story_node() {
 # 验证器设置功能
 manage_validator() {
     display_status "进入验证器设置..." "info"
-    echo "请选择验证器操作:"
-    echo "1. 创建新的验证器"
-    echo "2. 质押到现有验证器"
-    echo "3. 取消质押"
-    echo "4. 导出验证器密钥"
-    echo "5. 添加操作员"
-    echo "6. 移除操作员"
-    echo "7. 返回主菜单"
+    echo -e "${MENU_COLOR}${BOLD}请选择验证器操作:${NORMAL}"
+    echo -e "${MENU_COLOR}1. 创建新的验证器${NORMAL}"
+    echo -e "${MENU_COLOR}2. 质押到现有验证器${NORMAL}"
+    echo -e "${MENU_COLOR}3. 取消质押${NORMAL}"
+    echo -e "${MENU_COLOR}4. 导出验证器密钥${NORMAL}"
+    echo -e "${MENU_COLOR}5. 添加操作员${NORMAL}"
+    echo -e "${MENU_COLOR}6. 移除操作员${NORMAL}"
+    echo -e "${MENU_COLOR}7. 返回主菜单${NORMAL}"
     read -p "请输入选项（1-7）: " OPTION
 
     case $OPTION in
@@ -144,22 +145,24 @@ create_validator() {
 
 # 主菜单
 main_menu() {
-    clear
-    echo "============================Story 节点管理工具============================"
-    echo "请选择操作:"
-    echo "1. 部署 Story 节点"
-    echo "2. 管理验证器"
-    echo "3. 查看节点状态"
-    echo "4. 退出"
-    read -p "请输入选项（1-4）: " OPTION
+    while true; do
+        clear
+        echo -e "${MENU_COLOR}${BOLD}============================Story 节点管理工具============================${NORMAL}"
+        echo -e "${MENU_COLOR}请选择操作:${NORMAL}"
+        echo -e "${MENU_COLOR}1. 部署 Story 节点${NORMAL}"
+        echo -e "${MENU_COLOR}2. 管理验证器${NORMAL}"
+        echo -e "${MENU_COLOR}3. 查看节点状态${NORMAL}"
+        echo -e "${MENU_COLOR}4. 退出${NORMAL}"
+        read -p "请输入选项（1-4）: " OPTION
 
-    case $OPTION in
-        1) deploy_story_node ;;
-        2) manage_validator ;;
-        3) pm2 logs story-client ;;
-        4) exit 0 ;;
-        *) display_status "无效选项，请重试。" "error"; main_menu ;;
-    esac
+        case $OPTION in
+            1) deploy_story_node ;;
+            2) manage_validator ;;
+            3) pm2 logs story-client ;;
+            4) exit 0 ;;
+            *) display_status "无效选项，请重试。" "error";
+        esac
+    done
 }
 
 # 启动主菜单
