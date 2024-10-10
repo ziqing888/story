@@ -117,19 +117,15 @@ manage_validator() {
     echo "2. 质押到现有验证器"
     echo "3. 取消质押"
     echo "4. 导出验证器密钥"
-    echo "5. 添加操作员"
-    echo "6. 移除操作员"
-    echo "7. 返回主菜单"
-    read -p "请输入选项（1-7）: " OPTION
+    echo "5. 返回主菜单"
+    read -p "请输入选项（1-5）: " OPTION
 
     case $OPTION in
         1) create_validator ;;
         2) stake_to_validator ;;
         3) unstake_from_validator ;;
         4) export_validator_key ;;
-        5) add_operator ;;
-        6) remove_operator ;;
-        7) main_menu ;;
+        5) main_menu ;;
         *) display_status "无效选项，请重试。" "error"; manage_validator ;;
     esac
 }
