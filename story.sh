@@ -3,10 +3,10 @@
 # 定义文本格式
 BOLD=$(tput bold)
 NORMAL=$(tput sgr0)
-SUCCESS_COLOR='\e[1;32m'
-WARNING_COLOR='\e[1;33m'
-ERROR_COLOR='\e[1;31m'
-INFO_COLOR='\e[1;36m'
+SUCCESS_COLOR='\033[1;32m'
+WARNING_COLOR='\033[1;33m'
+ERROR_COLOR='\033[1;31m'
+INFO_COLOR='\033[1;36m'
 
 # 自定义状态显示函数
 display_status() {
@@ -29,15 +29,6 @@ display_status() {
             echo -e "${message}"
             ;;
     esac
-}
-
-# 导出验证器密钥
-export_validator_key() {
-    display_status "正在导出验证器密钥..." "info"
-    /usr/local/bin/story validator export
-    display_status "验证器密钥导出成功。" "success"
-    read -n 1 -s -r -p "导出完成！按任意键继续..."
-    main_menu
 }
 
 # 确保脚本以 root 用户身份运行
@@ -66,8 +57,8 @@ setup_prerequisites() {
 install_runtime_env() {
     if ! command -v node &> /dev/null; then
         display_status "正在安装 Node.js..." "info"
-        curl -fsSL https://deb.nodesource.com/setup_16.x | bash -
-        apt-get install -y nodejs
+        curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash -
+        sudo apt-get install -y nodejs
         display_status "Node.js 安装完成。" "success"
     else
         display_status "Node.js 已安装，跳过此步骤。" "success"
@@ -121,20 +112,24 @@ deploy_story_node() {
 # 验证器设置功能
 manage_validator() {
     display_status "进入验证器设置..." "info"
-    echo -e "${INFO_COLOR}${BOLD}请选择验证器操作:${NORMAL}"
-    echo -e "${INFO_COLOR}1. 创建新的验证器${NORMAL}"
-    echo -e "${INFO_COLOR}2. 质押到现有验证器${NORMAL}"
-    echo -e "${INFO_COLOR}3. 取消质押${NORMAL}"
-    echo -e "${INFO_COLOR}4. 导出验证器密钥${NORMAL}"
-    echo -e "${INFO_COLOR}5. 返回主菜单${NORMAL}"
-    read -p "请输入选项（1-5）: " OPTION
+    echo "请选择验证器操作:"
+    echo "1. 创建新的验证器"
+    echo "2. 质押到现有验证器"
+    echo "3. 取消质押"
+    echo "4. 导出验证器密钥"
+    echo "5. 添加操作员"
+    echo "6. 移除操作员"
+    echo "7. 返回主菜单"
+    read -p "请输入选项（1-7）: " OPTION
 
     case $OPTION in
         1) create_validator ;;
         2) stake_to_validator ;;
         3) unstake_from_validator ;;
         4) export_validator_key ;;
-        5) main_menu ;;
+        5) add_operator ;;
+        6) remove_operator ;;
+        7) main_menu ;;
         *) display_status "无效选项，请重试。" "error"; manage_validator ;;
     esac
 }
@@ -147,44 +142,24 @@ create_validator() {
     display_status "新的验证器创建成功。" "success"
 }
 
-# 质押到现有验证器
-stake_to_validator() {
-    read -p "请输入验证器公钥（Base64格式）: " VALIDATOR_PUB_KEY_IN_BASE64
-    read -p "请输入质押金额（以 IP 为单位）: " AMOUNT_TO_STAKE_IN_IP
-    AMOUNT_TO_STAKE_IN_WEI=$((AMOUNT_TO_STAKE_IN_IP * 1000000000000000000))
-    /usr/local/bin/story validator stake --validator-pubkey ${VALIDATOR_PUB_KEY_IN_BASE64} --stake ${AMOUNT_TO_STAKE_IN_WEI}
-    display_status "质押成功。" "success"
-}
-
-# 取消质押
-unstake_from_validator() {
-    read -p "请输入验证器公钥（Base64格式）: " VALIDATOR_PUB_KEY_IN_BASE64
-    read -p "请输入取消质押金额（以 IP 为单位）: " AMOUNT_TO_UNSTAKE_IN_IP
-    AMOUNT_TO_UNSTAKE_IN_WEI=$((AMOUNT_TO_UNSTAKE_IN_IP * 1000000000000000000))
-    /usr/local/bin/story validator unstake --validator-pubkey ${VALIDATOR_PUB_KEY_IN_BASE64} --unstake ${AMOUNT_TO_UNSTAKE_IN_WEI}
-    display_status "取消质押成功。" "success"
-}
-
 # 主菜单
 main_menu() {
-    while true; do
-        clear
-        echo -e "${INFO_COLOR}${BOLD}============================Story 节点管理工具============================${NORMAL}"
-        echo -e "${INFO_COLOR}请选择操作:${NORMAL}"
-        echo -e "${INFO_COLOR}1. 部署 Story 节点${NORMAL}"
-        echo -e "${INFO_COLOR}2. 管理验证器${NORMAL}"
-        echo -e "${INFO_COLOR}3. 查看节点状态${NORMAL}"
-        echo -e "${INFO_COLOR}4. 退出${NORMAL}"
-        read -p "请输入选项（1-4）: " OPTION
+    clear
+    echo "============================Story 节点管理工具============================"
+    echo "请选择操作:"
+    echo "1. 部署 Story 节点"
+    echo "2. 管理验证器"
+    echo "3. 查看节点状态"
+    echo "4. 退出"
+    read -p "请输入选项（1-4）: " OPTION
 
-        case $OPTION in
-            1) deploy_story_node ;;
-            2) manage_validator ;;
-            3) pm2 logs story-client ;;
-            4) exit 0 ;;
-            *) display_status "无效选项，请重试。" "error" ;;
-        esac
-    done
+    case $OPTION in
+        1) deploy_story_node ;;
+        2) manage_validator ;;
+        3) pm2 logs story-client ;;
+        4) exit 0 ;;
+        *) display_status "无效选项，请重试。" "error"; main_menu ;;
+    esac
 }
 
 # 启动主菜单
