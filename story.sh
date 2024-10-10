@@ -88,4 +88,95 @@ else
     show_status "已检测到现有的 .env 文件，跳过私钥输入。" "success"
 fi
 
-show_status "Story 节点已成功安装和配置！" "success"
+# 设置验证器的函数
+function setup_validator() {
+    show_status "设置验证器..." "progress"
+    echo "请选择验证器操作:"
+    echo "1. 创建新的验证器"
+    echo "2. 质押到现有验证器"
+    echo "3. 取消质押"
+    echo "4. 导出验证器密钥"
+    echo "5. 添加操作员"
+    echo "6. 移除操作员"
+    echo "7. 返回主菜单"
+    read -p "请输入选项（1-7）: " OPTION
+
+    case $OPTION in
+        1) create_validator ;;
+        2) stake_to_validator ;;
+        3) unstake_from_validator ;;
+        4) export_validator_key ;;
+        5) add_operator ;;
+        6) remove_operator ;;
+        7) main_menu ;;
+        *) show_status "无效选项，请重试。" "error"; setup_validator ;;
+    esac
+}
+
+# 创建新的验证器
+function create_validator() {
+    read -p "请输入质押金额（以 IP 为单位）: " AMOUNT_TO_STAKE_IN_IP
+    AMOUNT_TO_STAKE_IN_WEI=$((AMOUNT_TO_STAKE_IN_IP * 1000000000000000000))
+    /usr/local/bin/story validator create --stake ${AMOUNT_TO_STAKE_IN_WEI}
+    show_status "新的验证器创建成功。" "success"
+}
+
+# 质押到现有验证器
+function stake_to_validator() {
+    read -p "请输入验证器公钥（Base64格式）: " VALIDATOR_PUB_KEY_IN_BASE64
+    read -p "请输入质押金额（以 IP 为单位）: " AMOUNT_TO_STAKE_IN_IP
+    AMOUNT_TO_STAKE_IN_WEI=$((AMOUNT_TO_STAKE_IN_IP * 1000000000000000000))
+    /usr/local/bin/story validator stake --validator-pubkey ${VALIDATOR_PUB_KEY_IN_BASE64} --stake ${AMOUNT_TO_STAKE_IN_WEI}
+    show_status "质押成功。" "success"
+}
+
+# 取消质押
+function unstake_from_validator() {
+    read -p "请输入验证器公钥（Base64格式）: " VALIDATOR_PUB_KEY_IN_BASE64
+    read -p "请输入取消质押金额（以 IP 为单位）: " AMOUNT_TO_UNSTAKE_IN_IP
+    AMOUNT_TO_UNSTAKE_IN_WEI=$((AMOUNT_TO_UNSTAKE_IN_IP * 1000000000000000000))
+    /usr/local/bin/story validator unstake --validator-pubkey ${VALIDATOR_PUB_KEY_IN_BASE64} --unstake ${AMOUNT_TO_UNSTAKE_IN_WEI}
+    show_status "取消质押成功。" "success"
+}
+
+# 导出验证器密钥
+function export_validator_key() {
+    /usr/local/bin/story validator export
+    show_status "验证器密钥导出成功。" "success"
+}
+
+# 添加操作员
+function add_operator() {
+    read -p "请输入操作员的EVM地址: " OPERATOR_EVM_ADDRESS
+    /usr/local/bin/story validator add-operator --operator ${OPERATOR_EVM_ADDRESS}
+    show_status "操作员添加成功。" "success"
+}
+
+# 移除操作员
+function remove_operator() {
+    read -p "请输入操作员的EVM地址: " OPERATOR_EVM_ADDRESS
+    /usr/local/bin/story validator remove-operator --operator ${OPERATOR_EVM_ADDRESS}
+    show_status "操作员移除成功。" "success"
+}
+
+# 主菜单
+function main_menu() {
+    clear
+    echo "============================Story 节点管理工具============================"
+    echo "请选择操作:"
+    echo "1. 安装 Story 节点"
+    echo "2. 设置验证器"
+    echo "3. 检查节点状态"
+    echo "4. 退出"
+    read -p "请输入选项（1-4）: " OPTION
+
+    case $OPTION in
+        1) install_story_node ;;
+        2) setup_validator ;;
+        3) pm2 logs story-client ;;
+        4) exit 0 ;;
+        *) show_status "无效选项，请重试。" "error"; main_menu ;;
+    esac
+}
+
+main_menu
