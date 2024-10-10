@@ -150,6 +150,13 @@ create_validator() {
     show_status "新的验证器创建成功。" "success"
 }
 
+# 导出验证器密钥
+export_validator_key() {
+    show_status "正在导出验证器密钥..." "progress"
+    /usr/local/bin/story validator export
+    show_status "验证器密钥导出成功。" "success"
+}
+
 # 主菜单
 main_menu() {
     clear
@@ -172,4 +179,3 @@ main_menu() {
 
 # 启动主菜单
 main_menu
-
